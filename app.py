@@ -98,7 +98,7 @@ def try_subtitles(ydl, info, language):
 
 
 # ---------- Respaldo: transcribir audio con Groq ----------
-def groq_transcribe(audio_path, language):
+def groq_transcribe(audio_path, language, offset=0.0):
     import requests
     with open(audio_path, "rb") as f:
         r = requests.post(
@@ -110,7 +110,28 @@ def groq_transcribe(audio_path, language):
             timeout=600,
         )
     r.raise_for_status()
-    return [{"t": fmt_ts(s["start"]), "text": s["text"].strip()} for s in r.json().get("segments", [])]
+    return [{"t": fmt_ts(s["start"] + offset), "text": s["text"].strip()} for s in r.json().get("segments", [])]
+
+
+CHUNK_SECONDS = 1800  # 30 min por pedazo: a 24 kbps son ~5 MB, muy por debajo del límite de 25 MB de Groq
+
+
+def compress_and_split(src, tmp):
+    """Convierte el audio a mono 16 kHz 24 kbps (calidad de voz) y lo corta en pedazos de 30 min."""
+    import subprocess
+    import imageio_ffmpeg
+    ff = imageio_ffmpeg.get_ffmpeg_exe()
+    pattern = os.path.join(tmp, "part_%03d.mp3")
+    subprocess.run(
+        [ff, "-hide_banner", "-loglevel", "error", "-y", "-i", src, "-vn",
+         "-ac", "1", "-ar", "16000", "-c:a", "libmp3lame", "-b:a", "24k",
+         "-f", "segment", "-segment_time", str(CHUNK_SECONDS), "-reset_timestamps", "1", pattern],
+        check=True, timeout=900,
+    )
+    parts = sorted(os.path.join(tmp, f) for f in os.listdir(tmp) if f.startswith("part_"))
+    if not parts:
+        raise RuntimeError("No se pudo procesar el audio.")
+    return parts
 
 
 # ---------- Trabajo principal ----------
@@ -144,11 +165,11 @@ def run_job(job_id, platform, value, language, cookies_browser):
             )
             return
 
-        job.update(status="No hay subtítulos. Descargando audio…", progress=35)
+        job.update(status="Sin subtítulos. Descargando audio…", progress=35)
         with tempfile.TemporaryDirectory(prefix="skooltx_") as tmp:
             opts = dict(base)
             opts.update({
-                "format": "bestaudio/best",
+                "format": "worstaudio/bestaudio/worst",
                 "outtmpl": os.path.join(tmp, "audio.%(ext)s"),
             })
             with yt_dlp.YoutubeDL(opts) as ydl:
@@ -157,9 +178,15 @@ def run_job(job_id, platform, value, language, cookies_browser):
             if not audio:
                 raise RuntimeError("No se pudo obtener el audio.")
 
-            job.update(status="Transcribiendo con Groq…", progress=65)
-            job.update(segments=groq_transcribe(audio, language),
-                       status="Listo (Groq)", progress=100, done=True)
+            job.update(status="Comprimiendo audio…", progress=55)
+            parts = compress_and_split(audio, tmp)
+            segs = []
+            for i, part in enumerate(parts):
+                label = f" (parte {i + 1} de {len(parts)})" if len(parts) > 1 else ""
+                job.update(status="Transcribiendo con Groq" + label + "…",
+                           progress=60 + int(38 * i / len(parts)))
+                segs += groq_transcribe(part, language, offset=i * CHUNK_SECONDS)
+            job.update(segments=segs, status="Listo (Groq)", progress=100, done=True)
 
     except Exception as e:
         msg = str(e)
@@ -206,3 +233,4 @@ def index():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
