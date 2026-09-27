@@ -41,14 +41,14 @@
   main{position:relative;z-index:1}
 
   /* HERO */
-  .hero{min-height:88vh;display:flex;flex-direction:column;justify-content:flex-end;
-    padding:0 max(24px,calc((100vw - 1000px)/2)) 72px;position:relative}
-  .orb{position:absolute;left:50%;top:44%;width:min(620px,90vw);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  .hero{min-height:68vh;display:flex;flex-direction:column;justify-content:flex-end;
+    padding:0 max(24px,calc((100vw - 1000px)/2)) 40px;position:relative}
+  .orb{position:absolute;left:50%;top:34%;width:min(620px,90vw);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
     background:conic-gradient(from 200deg,#1a1a1f,#3a3f55,#101014,#51597a,#0d0d10,#1a1a1f);
     filter:blur(2px);opacity:.9;
     mask:radial-gradient(circle,#000 38%,transparent 70%);-webkit-mask:radial-gradient(circle,#000 38%,transparent 70%);
     animation:spin 40s linear infinite}
-  .wave{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);display:flex;gap:6px;align-items:center;height:140px}
+  .wave{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%);display:flex;gap:6px;align-items:center;height:140px}
   .wave span{width:5px;border-radius:3px;background:linear-gradient(#fff,#8fa3c8);opacity:.85;animation:wv 1.6s var(--ease) infinite}
   @keyframes wv{0%,100%{height:14%}50%{height:100%}}
   @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
@@ -69,7 +69,7 @@
   @keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 
   /* TOOL */
-  section.tool{padding:120px max(24px,calc((100vw - 820px)/2)) 40px}
+  section.tool{padding:40px max(24px,calc((100vw - 820px)/2)) 40px}
   .kicker{font-size:17px;font-weight:600;color:var(--muted);text-align:center;margin-bottom:10px}
   .h2{font-size:clamp(36px,5.6vw,64px);font-weight:700;letter-spacing:-.03em;line-height:1.05;text-align:center;margin-bottom:56px}
   .h2 em{font-style:normal;background:linear-gradient(90deg,#6ea8ff,#b18cff);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -142,27 +142,20 @@
 </head>
 <body>
 <div class="glow"></div><div class="grain"></div>
-<div class="banner">Sin instalar nada. Pega el ID y listo. <b>Empezar ›</b></div>
 <nav>
   <div class="brand"><i></i>Power Transcription</div>
-  <div class="links"><span>Skool</span><span>Vimeo</span><span>Loom</span><span>Hotmart</span><span>YouTube</span></div>
 </nav>
 
 <main>
   <header class="hero">
     <div class="orb"></div>
     <div class="wave" aria-hidden="true"></div>
-    <div class="eyebrow">Power Transcription</div>
-    <h1>Cada clase.<br>En texto.</h1>
-    <div class="hero-row">
-      <div class="sub">Ahora con resumen experto por IA.</div>
-      <div class="cta-pill"><div>Gratis, en segundos<small>Skool · Vimeo · Loom · Hotmart</small></div><a class="btn" href="#tool">Transcribir</a></div>
-    </div>
+        <h1>Cada clase.<br>En texto.</h1>
+    <div class="sub">Pega el ID del video y obtén la transcripción.</div>
   </header>
 
   <section class="tool" id="tool">
-    <div class="kicker reveal">Transcripción</div>
-    <div class="h2 reveal">Pega el ID.<br><em>Nosotros hacemos el resto.</em></div>
+    
 
     <div class="panel reveal">
       <div class="seg-ctl" id="plats">
@@ -174,7 +167,7 @@
       </div>
 
       <div class="field"><label for="val">Clip ID o URL</label>
-        <input id="val" placeholder="1189058452" autocomplete="off"></div>
+        <input id="val" placeholder="Ej. 1189058452 o una URL" autocomplete="off"></div>
       <div class="hint" id="hint"></div>
 
       <div class="field sel"><label for="lang">Idioma del video</label>
@@ -204,8 +197,8 @@
     </div>
 
     <div class="panel ai" id="aiCard">
-      <h3>Del video a <em>apuntes de experto.</em></h3>
-      <p>Une la transcripción con un prompt de analista senior: jerarquía de ideas, bullets densos y ⚠️ en todo lo que no esté verificado. Pégalo en tu IA favorita.</p>
+      <h3>Resumen con <em>IA.</em></h3>
+      <p>Copia la transcripción junto con el prompt de análisis y pégala en Claude o ChatGPT.</p>
       <div class="ai-actions">
         <button class="btn" id="copyPrompt">Copiar prompt + transcripción</button>
         <a class="link" href="https://claude.ai/new" target="_blank" rel="noopener">Abrir Claude ›</a>
@@ -213,15 +206,9 @@
       </div>
     </div>
   </section>
-
-  <section class="features">
-    <div class="feat reveal"><div class="num">~2s</div><h4>Subtítulos nativos</h4><p>Lee directo los subtítulos que el video ya trae. Sin esperas.</p></div>
-    <div class="feat reveal"><div class="num">5</div><h4>Plataformas</h4><p>Skool, Vimeo, Loom, Hotmart y YouTube desde un solo lugar.</p></div>
-    <div class="feat reveal"><div class="num">⚠️</div><h4>Resumen verificable</h4><p>Apuntes exhaustivos que marcan cualquier dato sin respaldo.</p></div>
-  </section>
 </main>
 
-<footer>Los videos con DRM no pueden transcribirse. YouTube puede fallar desde servidores compartidos. El servicio gratuito puede tardar unos segundos en despertar.</footer>
+<footer>Los videos con DRM no se pueden transcribir. Si tarda la primera vez, el servidor se está despertando.</footer>
 <script>
 // waveform + scroll reveal
 (()=>{const w=document.querySelector('.wave');for(let i=0;i<28;i++){const s=document.createElement('span');s.style.animationDelay=(i*0.07)+'s';w.appendChild(s)}
@@ -566,3 +553,4 @@ $("copyPrompt").onclick = async () => {
 </script>
 </body>
 </html>
+
