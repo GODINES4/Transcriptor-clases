@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transcriptor de Clases</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --ink:#1b1b1f; --muted:#6b6b75; --line:#e5e3dd; --accent:#3b5bdb; --accent-ink:#fff; --err:#c92a2a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#131316; --card:#1c1c21; --ink:#ececf1; --muted:#9a9aa6; --line:#2c2c33; --accent:#748ffc; --accent-ink:#0b0b10; --err:#ff8787; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:40px 16px 80px; }
+  h1 { font-size:28px; margin:0 0 6px; }
+  p.sub { color:var(--muted); margin:0 0 28px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; }
+  .platforms { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .platforms button { border:1px solid var(--line); background:transparent; color:var(--ink); padding:8px 14px; border-radius:999px; cursor:pointer; font:inherit; font-size:14px; }
+  .platforms button.on { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  label { font-size:13px; color:var(--muted); display:block; margin:14px 0 6px; }
+  input, select { width:100%; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink); font:inherit; }
+  .hint { font-size:12px; color:var(--muted); margin-top:6px; }
+  .go { margin-top:20px; width:100%; padding:14px; border:0; border-radius:10px; background:var(--accent); color:var(--accent-ink); font:inherit; font-weight:700; cursor:pointer; }
+  .go:disabled { opacity:.5; cursor:default; }
+  .bar { height:6px; background:var(--line); border-radius:6px; overflow:hidden; margin:18px 0 6px; }
+  .bar > div { height:100%; width:0; background:var(--accent); transition:width .4s; }
+  #status { font-size:14px; color:var(--muted); white-space:pre-wrap; }
+  #status.err { color:var(--err); }
+  #out { margin-top:24px; display:none; }
+  .tools { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; align-items:center; }
+  .tools button { border:1px solid var(--line); background:var(--card); color:var(--ink); padding:8px 12px; border-radius:8px; cursor:pointer; font:inherit; font-size:13px; }
+  .tools h2 { font-size:17px; margin:0 auto 0 0; }
+  .seg { display:flex; gap:12px; padding:6px 0; line-height:1.55; }
+  .seg span { color:var(--muted); font-size:12px; min-width:52px; padding-top:3px; font-variant-numeric:tabular-nums; }
+  .ts-off .seg span { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Transcriptor de clases</h1>
+  <p class="sub">Pega el ID del video (o la URL) y obtén la transcripción al instante.</p>
+
+  <div class="card">
+    <div class="platforms" id="plats">
+      <button data-p="skool" class="on">Skool</button>
+      <button data-p="vimeo">Vimeo</button>
+      <button data-p="loom">Loom</button>
+      <button data-p="hotmart">Hotmart</button>
+      <button data-p="youtube">YouTube</button>
+    </div>
+
+    <label for="val">Clip ID o URL</label>
+    <input id="val" placeholder="Ej. 4f8a2c… o https://…" autocomplete="off">
+    <div class="hint" id="hint"></div>
+
+    <label for="lang">Idioma del video</label>
+    <select id="lang">
+      <option value="es">Español</option>
+      <option value="en">Inglés</option>
+      <option value="pt">Portugués</option>
+      <option value="">Detectar automáticamente</option>
+    </select>
+
+    <button class="go" id="go">Transcribir</button>
+    <div class="bar"><div id="prog"></div></div>
+    <div id="status"></div>
+  </div>
+
+  <section id="out">
+    <div class="tools">
+      <h2 id="title"></h2>
+      <button id="tsBtn">Ocultar tiempos</button>
+      <button id="copy">Copiar</button>
+      <button id="dl">Descargar .txt</button>
+      <button id="dlmd">Descargar .md</button>
+    </div>
+    <div class="card" id="text"></div>
+  </section>
+</main>
+
+<script>
+const hints = {
+  skool:   "ID del video nativo de Skool, o la URL de la lección.",
+  vimeo:   "El número del video. Si es privado: 123456789/hash (clic derecho en el video > Abrir panel de depuración).",
+  loom:    "El ID que va después de /share/.",
+  hotmart: "El ID del player. Los videos con protección DRM no se pueden transcribir.",
+  youtube: "El ID que va después de v=. Puede fallar por bloqueos del hosting gratuito."
+};
+let platform = "skool", segs = [], title = "";
+const $ = id => document.getElementById(id);
+const setHint = () => $("hint").textContent = hints[platform];
+setHint();
+
+$("plats").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll("#plats button").forEach(x => x.classList.remove("on"));
+  b.classList.add("on"); platform = b.dataset.p; setHint();
+};
+
+$("go").onclick = async () => {
+  const value = $("val").value.trim();
+  if (!value) { $("val").focus(); return; }
+  $("go").disabled = true; $("status").className = ""; $("out").style.display = "none";
+  $("status").textContent = "Iniciando…"; $("prog").style.width = "0";
+  try {
+    const r = await fetch("/api/transcribe", { method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ platform, value, language:$("lang").value }) });
+    const { job_id, error } = await r.json();
+    if (error) return fail(error);
+    poll(job_id);
+  } catch (e) {
+    fail("No se pudo conectar con el servidor. Puede estar despertando (los planes gratis se duermen); espera unos segundos y reintenta.");
+  }
+};
+
+async function poll(id) {
+  const j = await (await fetch("/api/status/" + id)).json();
+  $("prog").style.width = (j.progress || 0) + "%";
+  $("status").textContent = j.status || "";
+  if (j.segments && j.segments.length) { segs = j.segments; title = j.title || ""; render(); }
+  if (j.error) return fail(j.error);
+  if (j.done) { $("go").disabled = false; return; }
+  setTimeout(() => poll(id), 1200);
+}
+
+function fail(msg) { $("status").className = "err"; $("status").textContent = msg; $("go").disabled = false; }
+
+function render() {
+  $("out").style.display = "block";
+  $("title").textContent = title;
+  $("text").innerHTML = segs.map(s =>
+    `<div class="seg"><span>${s.t}</span><div>${s.text.replace(/</g,"&lt;")}</div></div>`).join("");
+}
+
+const plain = withTs => segs.map(s => withTs ? `[${s.t}] ${s.text}` : s.text).join(withTs ? "\n" : " ");
+const showTs = () => !$("text").classList.contains("ts-off");
+
+$("tsBtn").onclick = () => {
+  $("text").classList.toggle("ts-off");
+  $("tsBtn").textContent = showTs() ? "Ocultar tiempos" : "Mostrar tiempos";
+};
+$("copy").onclick = async () => {
+  await navigator.clipboard.writeText(plain(showTs()));
+  $("copy").textContent = "¡Copiado!"; setTimeout(() => $("copy").textContent = "Copiar", 1500);
+};
+function save(name, content) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([content], { type:"text/plain;charset=utf-8" }));
+  a.download = name; a.click();
+}
+const fname = ext => (title || "transcripcion").replace(/[^\w\-áéíóúñ ]+/gi, "").trim() + ext;
+$("dl").onclick = () => save(fname(".txt"), plain(showTs()));
+$("dlmd").onclick = () => save(fname(".md"), `# ${title}\n\n` + plain(showTs()));
+</script>
+</body>
+</html>
