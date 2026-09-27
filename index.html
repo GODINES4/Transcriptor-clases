@@ -201,13 +201,14 @@
       <p>Copia la transcripción junto con el prompt de análisis y pégala en Claude o ChatGPT.</p>
       <div class="ai-actions">
         <button class="btn" id="copyPrompt">Copiar prompt + transcripción</button>
-        <a class="link" href="https://claude.ai/new" target="_blank" rel="noopener">Abrir Claude ›</a>
-        <a class="link" href="https://chatgpt.com/" target="_blank" rel="noopener">Abrir ChatGPT ›</a>
+        <button class="link" id="openClaude" style="background:none;border:0;cursor:pointer;font:inherit;font-size:17px">Copiar y abrir Claude ›</button>
+        <button class="link" id="openGPT" style="background:none;border:0;cursor:pointer;font:inherit;font-size:17px">Copiar y abrir ChatGPT ›</button>
       </div>
     </div>
   </section>
 </main>
 
+<div id="toast" style="position:fixed;left:50%;bottom:32px;transform:translate(-50%,40px);opacity:0;z-index:50;background:rgba(40,40,45,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);color:#f5f5f7;padding:14px 22px;border-radius:999px;font-size:15px;transition:all .5s cubic-bezier(.22,1,.36,1);pointer-events:none;text-align:center;max-width:90vw"></div>
 <footer>Los videos con DRM no se pueden transcribir. Si tarda la primera vez, el servidor se está despertando.</footer>
 <script>
 // waveform + scroll reveal
@@ -545,11 +546,22 @@ Al finalizar, genera una **Checklist de Exhaustividad** que incluya:
 ✅ **Instrucción final:** 
 A partir de la transcripción, genera un **resumen completo, profesional y exhaustivo** cumpliendo **TODAS las reglas anteriores**.`;
 
-$("copyPrompt").onclick = async () => {
-  const full = EXPERT_PROMPT + "\n\n---\n\n# TRANSCRIPCIÓN: " + (title || "") + "\n\n" + plain(true);
-  await navigator.clipboard.writeText(full);
-  flashCopied($("copyPrompt"), "¡Copiado! Pégalo en Claude o ChatGPT");
+function fullText(){ return EXPERT_PROMPT + "\n\n---\n\n# TRANSCRIPCIÓN: " + (title || "") + "\n\n" + plain(true); }
+function copyFallback(t){ const a=document.createElement("textarea"); a.value=t; a.style.position="fixed"; a.style.opacity="0"; document.body.appendChild(a); a.select(); let ok=false; try{ok=document.execCommand("copy")}catch(e){} a.remove(); return ok; }
+function copyNow(t){ let ok=copyFallback(t); if(navigator.clipboard){ navigator.clipboard.writeText(t).catch(()=>{}); ok=true; } return ok; }
+function toast(msg){ const el=$("toast"); el.textContent=msg; el.style.opacity="1"; el.style.transform="translate(-50%,0)"; clearTimeout(toast._t); toast._t=setTimeout(()=>{el.style.opacity="0";el.style.transform="translate(-50%,40px)"},6000); }
+$("copyPrompt").onclick = () => {
+  copyNow(fullText());
+  flashCopied($("copyPrompt"), "¡Copiado!");
+  toast("Listo. Pégalo en Claude o ChatGPT con Ctrl+V");
 };
+function openAI(url, name){
+  copyNow(fullText());
+  toast("Copiado. En " + name + " haz clic en el chat y pega con Ctrl+V (⌘V en Mac)");
+  setTimeout(()=>window.open(url, "_blank", "noopener"), 150);
+}
+$("openClaude").onclick = () => openAI("https://claude.ai/new", "Claude");
+$("openGPT").onclick = () => openAI("https://chatgpt.com/", "ChatGPT");
 </script>
 </body>
 </html>
