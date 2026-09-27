@@ -138,6 +138,27 @@
   .feat p{color:var(--muted);font-size:15px;line-height:1.5}
 
   footer{position:relative;z-index:1;border-top:1px solid var(--line);margin-top:60px;padding:24px max(24px,calc((100vw - 1000px)/2)) 40px;color:var(--dim);font-size:12px;line-height:1.6}
+  .field textarea{width:100%;background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:18px;color:var(--ink);
+    font:inherit;font-size:17px;line-height:1.6;padding:30px 20px 14px;outline:none;resize:vertical;min-height:130px;transition:border-color .3s,box-shadow .3s;font-variant-numeric:tabular-nums}
+  .field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(10,132,255,.2)}
+  #queue{margin-top:22px;display:flex;flex-direction:column;gap:10px}
+  .job{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:16px;padding:14px 18px;animation:up .6s var(--ease)}
+  .job-top{display:flex;justify-content:space-between;gap:12px;font-size:14px;margin-bottom:10px}
+  .job-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .job-st{color:var(--muted);white-space:nowrap;font-size:13px}
+  .job.err .job-st{color:var(--err)} .job.ok .job-st{color:var(--ok)}
+  .job .bar{margin:0}
+  .job.ok .bar>div{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+  .job.err .bar>div{background:var(--err);box-shadow:none}
+  .job-err{color:var(--err);font-size:12px;margin-top:8px;white-space:pre-wrap;line-height:1.5}
+  .res-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+  .res-top h2{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-right:auto}
+  #out{scroll-margin-top:64px}
+  #results{display:flex;flex-direction:column;gap:18px}
+  .rcard{animation:up .8s var(--ease)}
+  .rcard .res-head h2{font-size:20px}
+  .rcard .num{color:var(--muted);font-weight:500;margin-right:6px}
+  .link{background:none;border:0;cursor:pointer;font:inherit}
 </style>
 </head>
 <body>
@@ -155,8 +176,6 @@
   </header>
 
   <section class="tool" id="tool">
-    
-
     <div class="panel reveal">
       <div class="seg-ctl" id="plats">
         <button data-p="skool" class="on">Skool</button>
@@ -166,11 +185,11 @@
         <button data-p="youtube">YouTube</button>
       </div>
 
-      <div class="field"><label for="val">Clip ID o URL</label>
-        <input id="val" placeholder="Ej. 1189058452 o una URL" autocomplete="off"></div>
+      <div class="field"><label for="val">Clip IDs o URLs · uno por línea</label>
+        <textarea id="val" rows="4" placeholder="1189058452&#10;1189058999&#10;https://…" spellcheck="false"></textarea></div>
       <div class="hint" id="hint"></div>
 
-      <div class="field sel"><label for="lang">Idioma del video</label>
+      <div class="field sel"><label for="lang">Idioma de los videos</label>
         <select id="lang">
           <option value="es">Español</option>
           <option value="en">Inglés</option>
@@ -179,30 +198,27 @@
         </select></div>
 
       <button class="go" id="go">Transcribir</button>
-      <div class="bar"><div id="prog"></div></div>
-      <div id="status"></div>
+      <div id="queue"></div>
     </div>
   </section>
 
   <section id="out">
-    <div class="panel">
-      <div class="res-head">
-        <h2 id="title"></h2>
-        <button class="chip" id="tsBtn">Ocultar tiempos</button>
-        <button class="chip" id="copy">Copiar</button>
-        <button class="chip" id="dl">.txt</button>
-        <button class="chip" id="dlmd">.md</button>
-      </div>
-      <div class="transcript" id="text"></div>
+    <div class="res-top">
+      <h2 id="count"></h2>
+      <button class="chip" id="tsBtn">Ocultar tiempos</button>
+      <button class="chip" id="copyAll">Copiar todo</button>
+      <button class="chip" id="dlAll">Descargar todo .md</button>
+      <button class="chip" id="clearAll">Limpiar</button>
     </div>
+    <div id="results"></div>
 
     <div class="panel ai" id="aiCard">
       <h3>Resumen con <em>IA.</em></h3>
-      <p>Copia la transcripción junto con el prompt de análisis y pégala en Claude o ChatGPT.</p>
+      <p>Copia todas las transcripciones, cada una con su nombre, junto con el prompt de análisis. Luego pégalas en Claude o ChatGPT.</p>
       <div class="ai-actions">
-        <button class="btn" id="copyPrompt">Copiar prompt + transcripción</button>
-        <button class="link" id="openClaude" style="background:none;border:0;cursor:pointer;font:inherit;font-size:17px">Copiar y abrir Claude ›</button>
-        <button class="link" id="openGPT" style="background:none;border:0;cursor:pointer;font:inherit;font-size:17px">Copiar y abrir ChatGPT ›</button>
+        <button class="btn" id="copyPrompt">Copiar prompt + transcripciones</button>
+        <button class="link" id="openClaude">Copiar y abrir Claude ›</button>
+        <button class="link" id="openGPT">Copiar y abrir ChatGPT ›</button>
       </div>
     </div>
   </section>
@@ -224,82 +240,85 @@ const hints = {
   hotmart: "El ID del player. Los videos con protección DRM no se pueden transcribir.",
   youtube: "El ID que va después de v=. Puede fallar por bloqueos del hosting gratuito."
 };
-let platform = "skool", segs = [], title = "";
-const $ = id => document.getElementById(id);
-const setHint = () => $("hint").textContent = hints[platform];
+let platform="skool", jobs=[], seq=0, showTs=true;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const setHint=()=>$("hint").textContent=hints[platform]+" Puedes pegar varios, uno por línea.";
 setHint();
+$("plats").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#plats button").forEach(x=>x.classList.remove("on"));b.classList.add("on");platform=b.dataset.p;setHint();};
 
-$("plats").onclick = e => {
-  const b = e.target.closest("button"); if (!b) return;
-  document.querySelectorAll("#plats button").forEach(x => x.classList.remove("on"));
-  b.classList.add("on"); platform = b.dataset.p; setHint();
+const CONCURRENCY=3;
+$("go").onclick=()=>{
+  const ids=[...new Set($("val").value.split(/[\n,]+/).map(s=>s.trim()).filter(Boolean))];
+  if(!ids.length){$("val").focus();return;}
+  const lang=$("lang").value;
+  const fresh=ids.map(v=>{const j={n:++seq,value:v,platform,lang,title:v,segs:[],done:false,error:null,progress:0,status:"En cola…"};
+    j.el=document.createElement("div");j.el.className="job";$("queue").append(j.el);drawJob(j);return j;});
+  jobs.push(...fresh);
+  $("val").value="";
+  pump();
 };
-
-$("go").onclick = async () => {
-  const value = $("val").value.trim();
-  if (!value) { $("val").focus(); return; }
-  $("go").disabled = true; render._s=0; $("status").className = ""; $("out").style.display = "none";
-  $("aiCard").style.display = "none";
-  $("status").textContent = "Iniciando…"; $("prog").style.width = "0";
-  try {
-    const r = await fetch("/api/transcribe", { method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ platform, value, language:$("lang").value }) });
-    const { job_id, error } = await r.json();
-    if (error) return fail(error);
-    poll(job_id);
-  } catch (e) {
-    fail("No se pudo conectar con el servidor. Puede estar despertando (los planes gratis se duermen); espera unos segundos y reintenta.");
+let running=0;
+function pump(){
+  while(running<CONCURRENCY){const j=jobs.find(x=>!x.started);if(!j)break;j.started=true;running++;
+    run(j).finally(()=>{running--;pump();});}
+}
+function drawJob(j){
+  j.el.className="job"+(j.error?" err":j.done?" ok":"");
+  j.el.innerHTML=`<div class="job-top"><span class="job-name">${j.n}. ${esc(j.title)}</span><span class="job-st">${esc(j.error?"Error":j.status)}</span></div>
+  <div class="bar"><div style="width:${j.error?100:j.progress}%"></div></div>${j.error?`<div class="job-err">${esc(j.error)}</div>`:""}`;
+}
+async function run(j){
+  try{
+    const r=await fetch("/api/transcribe",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({platform:j.platform,value:j.value,language:j.lang})});
+    const d=await r.json(); if(d.error) throw new Error(d.error);
+    while(true){
+      await new Promise(r=>setTimeout(r,1200));
+      const s=await (await fetch("/api/status/"+d.job_id)).json();
+      j.progress=s.progress||0; j.status=s.status||""; if(s.title) j.title=s.title;
+      if(s.error){j.error=s.error;break;}
+      if(s.done){j.segs=s.segments||[];j.done=true;j.progress=100;break;}
+      drawJob(j);
+    }
+  }catch(e){
+    j.error=(e instanceof TypeError)?"No se pudo conectar con el servidor. Puede estar despertando; espera unos segundos y reintenta.":e.message;
   }
-};
-
-async function poll(id) {
-  const j = await (await fetch("/api/status/" + id)).json();
-  $("prog").style.width = (j.progress || 0) + "%";
-  $("status").textContent = j.status || "";
-  if (j.segments && j.segments.length) { segs = j.segments; title = j.title || ""; render(); }
-  if (j.error) return fail(j.error);
-  if (j.done) {
-    $("go").disabled = false;
-    $("status").className = "ok";
-    $("aiCard").style.display = segs.length ? "block" : "none";
-    return;
-  }
-  setTimeout(() => poll(id), 1200);
+  drawJob(j);
+  if(j.done&&j.segs.length) addResult(j);
 }
-
-function fail(msg) { $("status").className = "err"; $("status").textContent = msg; $("go").disabled = false; }
-
-function render() {
-  $("out").style.display = "block"; if(!render._s){render._s=1;$("out").scrollIntoView({behavior:"smooth",block:"start"});}
-  $("title").textContent = title;
-  $("text").innerHTML = segs.map(s =>
-    `<div class="seg"><span>${s.t}</span><div>${s.text.replace(/</g,"&lt;")}</div></div>`).join("");
+function addResult(j){
+  $("out").style.display="block";
+  const c=document.createElement("div"); c.className="panel rcard"; j.card=c;
+  c.innerHTML=`<div class="res-head"><h2><span class="num">${j.n}.</span>${esc(j.title)}</h2>
+    <button class="chip" data-a="copy">Copiar</button><button class="chip" data-a="txt">.txt</button>
+    <button class="chip" data-a="md">.md</button><button class="chip" data-a="del">Quitar</button></div>
+    <div class="transcript${showTs?"":" ts-off"}">${j.segs.map(s=>`<div class="seg"><span>${s.t}</span><div>${esc(s.text)}</div></div>`).join("")}</div>`;
+  c.onclick=e=>{const a=e.target.dataset.a;if(!a)return;
+    if(a==="copy"){copyNow(plain(j));toast("Transcripción copiada");}
+    if(a==="txt") save(fname(j,".txt"),plain(j));
+    if(a==="md") save(fname(j,".md"),`# ${j.title}\n\n`+plain(j));
+    if(a==="del"){j.removed=true;c.remove();refresh();}};
+  $("results").append(c); refresh();
+  if(done().length===1) $("out").scrollIntoView({behavior:"smooth",block:"start"});
 }
+const done=()=>jobs.filter(j=>j.done&&j.segs.length&&!j.removed).sort((a,b)=>a.n-b.n);
+function refresh(){const n=done().length;
+  $("count").textContent=n===1?"1 transcripción":n+" transcripciones";
+  $("aiCard").style.display=n?"block":"none"; if(!n) $("out").style.display="none";}
+const plain=j=>j.segs.map(s=>showTs?`[${s.t}] ${s.text}`:s.text).join(showTs?"\n":" ");
+const allText=()=>done().map(j=>`## ${j.n}. ${j.title}\n\n${plain(j)}`).join("\n\n---\n\n");
+const fname=(j,ext)=>(j.title||"transcripcion").replace(/[^\w\-áéíóúñÁÉÍÓÚÑ ]+/g,"").trim().slice(0,80)+ext;
+function save(name,content){const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([content],{type:"text/plain;charset=utf-8"}));a.download=name;a.click();}
 
-const plain = withTs => segs.map(s => withTs ? `[${s.t}] ${s.text}` : s.text).join(withTs ? "\n" : " ");
-const showTs = () => !$("text").classList.contains("ts-off");
-
-$("tsBtn").onclick = () => {
-  $("text").classList.toggle("ts-off");
-  $("tsBtn").textContent = showTs() ? "Ocultar tiempos" : "Mostrar tiempos";
-};
-async function flashCopied(btn, original) {
-  const old = btn.textContent;
-  btn.textContent = original || "¡Copiado!";
-  setTimeout(() => btn.textContent = old, 1500);
-}
-$("copy").onclick = async () => {
-  await navigator.clipboard.writeText(plain(showTs()));
-  flashCopied($("copy"));
-};
-function save(name, content) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([content], { type:"text/plain;charset=utf-8" }));
-  a.download = name; a.click();
-}
-const fname = ext => (title || "transcripcion").replace(/[^\w\-áéíóúñ ]+/gi, "").trim() + ext;
-$("dl").onclick = () => save(fname(".txt"), plain(showTs()));
-$("dlmd").onclick = () => save(fname(".md"), `# ${title}\n\n` + plain(showTs()));
+$("tsBtn").onclick=()=>{showTs=!showTs;document.querySelectorAll(".transcript").forEach(t=>t.classList.toggle("ts-off",!showTs));
+  $("tsBtn").textContent=showTs?"Ocultar tiempos":"Mostrar tiempos";};
+$("copyAll").onclick=()=>{copyNow(allText());toast("Todas las transcripciones copiadas");};
+$("dlAll").onclick=()=>save("transcripciones.md","# Transcripciones\n\n"+allText());
+$("clearAll").onclick=()=>{done().forEach(j=>{j.removed=true;j.card&&j.card.remove();});
+  jobs.filter(j=>j.done||j.error).forEach(j=>j.el.remove()); jobs=jobs.filter(j=>!(j.done||j.error)); refresh();};
 
 // ---------- Prompt de análisis experto ----------
 const EXPERT_PROMPT = `# Prompt depurado para síntesis profesional
@@ -546,22 +565,18 @@ Al finalizar, genera una **Checklist de Exhaustividad** que incluya:
 ✅ **Instrucción final:** 
 A partir de la transcripción, genera un **resumen completo, profesional y exhaustivo** cumpliendo **TODAS las reglas anteriores**.`;
 
-function fullText(){ return EXPERT_PROMPT + "\n\n---\n\n# TRANSCRIPCIÓN: " + (title || "") + "\n\n" + plain(true); }
-function copyFallback(t){ const a=document.createElement("textarea"); a.value=t; a.style.position="fixed"; a.style.opacity="0"; document.body.appendChild(a); a.select(); let ok=false; try{ok=document.execCommand("copy")}catch(e){} a.remove(); return ok; }
-function copyNow(t){ let ok=copyFallback(t); if(navigator.clipboard){ navigator.clipboard.writeText(t).catch(()=>{}); ok=true; } return ok; }
-function toast(msg){ const el=$("toast"); el.textContent=msg; el.style.opacity="1"; el.style.transform="translate(-50%,0)"; clearTimeout(toast._t); toast._t=setTimeout(()=>{el.style.opacity="0";el.style.transform="translate(-50%,40px)"},6000); }
-$("copyPrompt").onclick = () => {
-  copyNow(fullText());
-  flashCopied($("copyPrompt"), "¡Copiado!");
-  toast("Listo. Pégalo en Claude o ChatGPT con Ctrl+V");
-};
-function openAI(url, name){
-  copyNow(fullText());
-  toast("Copiado. En " + name + " haz clic en el chat y pega con Ctrl+V (⌘V en Mac)");
-  setTimeout(()=>window.open(url, "_blank", "noopener"), 150);
-}
-$("openClaude").onclick = () => openAI("https://claude.ai/new", "Claude");
-$("openGPT").onclick = () => openAI("https://chatgpt.com/", "ChatGPT");
+function fullText(){const list=done();
+  return EXPERT_PROMPT+"\n\n---\n\n# TRANSCRIPCIONES ("+list.length+")\n\n"+allText();}
+function copyFallback(t){const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";
+  document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}a.remove();return ok;}
+function copyNow(t){copyFallback(t);if(navigator.clipboard)navigator.clipboard.writeText(t).catch(()=>{});}
+function toast(msg){const el=$("toast");el.textContent=msg;el.style.opacity="1";el.style.transform="translate(-50%,0)";
+  clearTimeout(toast._t);toast._t=setTimeout(()=>{el.style.opacity="0";el.style.transform="translate(-50%,40px)"},6000);}
+$("copyPrompt").onclick=()=>{copyNow(fullText());toast("Listo. Pégalo en Claude o ChatGPT con Ctrl+V");};
+function openAI(url,name){copyNow(fullText());toast("Copiado. En "+name+" haz clic en el chat y pega con Ctrl+V (⌘V en Mac)");
+  setTimeout(()=>window.open(url,"_blank","noopener"),150);}
+$("openClaude").onclick=()=>openAI("https://claude.ai/new","Claude");
+$("openGPT").onclick=()=>openAI("https://chatgpt.com/","ChatGPT");
 </script>
 </body>
 </html>
