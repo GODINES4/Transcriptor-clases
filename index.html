@@ -3,44 +3,170 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Transcriptor de Clases</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<title>Transcriptor</title>
 <style>
-  :root { --bg:#f6f5f2; --card:#fff; --ink:#1b1b1f; --muted:#6b6b75; --line:#e5e3dd; --accent:#3b5bdb; --accent-ink:#fff; --err:#c92a2a; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#131316; --card:#1c1c21; --ink:#ececf1; --muted:#9a9aa6; --line:#2c2c33; --accent:#748ffc; --accent-ink:#0b0b10; --err:#ff8787; }
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f7;
+    --card: #ffffff;
+    --ink: #1d1d1f;
+    --muted: #86868b;
+    --line: rgba(0,0,0,0.08);
+    --accent: #0071e3;
+    --accent-ink: #ffffff;
+    --err: #ff3b30;
+    --ok: #34c759;
+    --shadow: 0 10px 40px rgba(0,0,0,0.06);
   }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,sans-serif; }
-  main { max-width:760px; margin:0 auto; padding:40px 16px 80px; }
-  h1 { font-size:28px; margin:0 0 6px; }
-  p.sub { color:var(--muted); margin:0 0 28px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; }
-  .platforms { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
-  .platforms button { border:1px solid var(--line); background:transparent; color:var(--ink); padding:8px 14px; border-radius:999px; cursor:pointer; font:inherit; font-size:14px; }
-  .platforms button.on { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
-  label { font-size:13px; color:var(--muted); display:block; margin:14px 0 6px; }
-  input, select { width:100%; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink); font:inherit; }
-  .hint { font-size:12px; color:var(--muted); margin-top:6px; }
-  .go { margin-top:20px; width:100%; padding:14px; border:0; border-radius:10px; background:var(--accent); color:var(--accent-ink); font:inherit; font-weight:700; cursor:pointer; }
-  .go:disabled { opacity:.5; cursor:default; }
-  .bar { height:6px; background:var(--line); border-radius:6px; overflow:hidden; margin:18px 0 6px; }
-  .bar > div { height:100%; width:0; background:var(--accent); transition:width .4s; }
-  #status { font-size:14px; color:var(--muted); white-space:pre-wrap; }
-  #status.err { color:var(--err); }
-  #out { margin-top:24px; display:none; }
-  .tools { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; align-items:center; }
-  .tools button { border:1px solid var(--line); background:var(--card); color:var(--ink); padding:8px 12px; border-radius:8px; cursor:pointer; font:inherit; font-size:13px; }
-  .tools h2 { font-size:17px; margin:0 auto 0 0; }
-  .seg { display:flex; gap:12px; padding:6px 0; line-height:1.55; }
-  .seg span { color:var(--muted); font-size:12px; min-width:52px; padding-top:3px; font-variant-numeric:tabular-nums; }
-  .ts-off .seg span { display:none; }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --bg2: #1d1d1f;
+      --card: #1c1c1e;
+      --ink: #f5f5f7;
+      --muted: #98989d;
+      --line: rgba(255,255,255,0.1);
+      --accent: #2997ff;
+      --accent-ink: #ffffff;
+      --err: #ff453a;
+      --ok: #32d74b;
+      --shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 20;
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    background: color-mix(in srgb, var(--bg) 75%, transparent);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600;
+  }
+
+  main { max-width: 720px; margin: 0 auto; padding: 64px 24px 120px; }
+
+  .hero { text-align: center; margin-bottom: 56px; }
+  .hero h1 {
+    font-size: clamp(34px, 6vw, 52px);
+    font-weight: 700;
+    margin: 0 0 12px;
+    letter-spacing: -0.02em;
+    background: linear-gradient(180deg, var(--ink), color-mix(in srgb, var(--ink) 70%, var(--muted)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p { font-size: 19px; color: var(--muted); margin: 0; }
+
+  .card {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+  }
+  .card + .card { margin-top: 20px; }
+
+  .platforms { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .platforms button {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    color: var(--ink);
+    padding: 9px 16px;
+    border-radius: 980px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all .2s cubic-bezier(.25,.8,.25,1);
+  }
+  .platforms button:hover { transform: translateY(-1px); }
+  .platforms button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  label { font-size: 13px; color: var(--muted); display: block; margin: 18px 0 8px; font-weight: 500; }
+  input, select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--bg2);
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+  .go {
+    margin-top: 24px; width: 100%; padding: 16px;
+    border: 0; border-radius: 14px;
+    background: var(--accent); color: var(--accent-ink);
+    font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+    transition: transform .15s, opacity .15s, filter .15s;
+  }
+  .go:hover:not(:disabled) { filter: brightness(1.08); }
+  .go:active:not(:disabled) { transform: scale(0.98); }
+  .go:disabled { opacity: .4; cursor: default; }
+
+  .bar { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; margin: 20px 0 8px; }
+  .bar > div { height: 100%; width: 0; background: var(--accent); transition: width .5s cubic-bezier(.25,.8,.25,1); }
+  #status { font-size: 13px; color: var(--muted); white-space: pre-wrap; min-height: 18px; line-height: 1.6; }
+  #status.err { color: var(--err); }
+  #status.ok { color: var(--ok); }
+
+  #out { margin-top: 20px; display: none; animation: rise .4s cubic-bezier(.25,.8,.25,1); }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .tools h2 { font-size: 19px; font-weight: 600; margin: 0 auto 0 0; letter-spacing: -0.01em; }
+  .tools button, .pill-btn {
+    border: 1px solid var(--line); background: var(--bg2); color: var(--ink);
+    padding: 9px 14px; border-radius: 980px; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500;
+    transition: all .2s;
+  }
+  .tools button:hover, .pill-btn:hover { background: var(--line); }
+
+  .transcript { max-height: 420px; overflow-y: auto; }
+  .seg { display: flex; gap: 14px; padding: 8px 0; line-height: 1.6; font-size: 15px; }
+  .seg span { color: var(--muted); font-size: 12px; min-width: 54px; padding-top: 3px; font-variant-numeric: tabular-nums; }
+  .ts-off .seg span { display: none; }
+
+  .ai-card { display: none; }
+  .ai-card p.desc { color: var(--muted); font-size: 14px; margin: 0 0 18px; line-height: 1.6; }
+  .ai-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .ai-actions .primary {
+    background: var(--accent); color: var(--accent-ink); border: none;
+    padding: 12px 20px; border-radius: 980px; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer;
+  }
+  .ai-actions a.pill-btn { text-decoration: none; display: inline-flex; align-items: center; }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 40px; }
 </style>
 </head>
 <body>
+<nav>Transcriptor</nav>
 <main>
-  <h1>Transcriptor de clases</h1>
-  <p class="sub">Pega el ID del video (o la URL) y obtén la transcripción al instante.</p>
+  <div class="hero">
+    <h1>Transcribe en segundos</h1>
+    <p>Pega el ID del video y obtén el texto al instante.</p>
+  </div>
 
   <div class="card">
     <div class="platforms" id="plats">
@@ -69,21 +195,35 @@
   </div>
 
   <section id="out">
-    <div class="tools">
-      <h2 id="title"></h2>
-      <button id="tsBtn">Ocultar tiempos</button>
-      <button id="copy">Copiar</button>
-      <button id="dl">Descargar .txt</button>
-      <button id="dlmd">Descargar .md</button>
+    <div class="card">
+      <div class="tools">
+        <h2 id="title"></h2>
+        <button id="tsBtn">Ocultar tiempos</button>
+        <button id="copy">Copiar</button>
+        <button id="dl">.txt</button>
+        <button id="dlmd">.md</button>
+      </div>
+      <div class="transcript" id="text"></div>
     </div>
-    <div class="card" id="text"></div>
+
+    <div class="card ai-card" id="aiCard">
+      <div class="tools"><h2>Resumen con IA</h2></div>
+      <p class="desc">Junta la transcripción con un prompt de análisis experto (bullets, jerarquía de ideas, verificación de datos) y lo copia listo para pegar en Claude o ChatGPT.</p>
+      <div class="ai-actions">
+        <button class="primary" id="copyPrompt">Copiar prompt + transcripción</button>
+        <a class="pill-btn" href="https://claude.ai/new" target="_blank" rel="noopener">Abrir Claude ↗</a>
+        <a class="pill-btn" href="https://chatgpt.com/" target="_blank" rel="noopener">Abrir ChatGPT ↗</a>
+      </div>
+    </div>
   </section>
+
+  <footer>Los subtítulos se leen del propio video. Sin subtítulos, se usa un respaldo en la nube si está configurado.</footer>
 </main>
 
 <script>
 const hints = {
   skool:   "ID del video nativo de Skool, o la URL de la lección.",
-  vimeo:   "El número del video. Si es privado: 123456789/hash (clic derecho en el video > Abrir panel de depuración).",
+  vimeo:   "El número del video. Si es privado: 123456789/hash (clic derecho en el video → Abrir panel de depuración).",
   loom:    "El ID que va después de /share/.",
   hotmart: "El ID del player. Los videos con protección DRM no se pueden transcribir.",
   youtube: "El ID que va después de v=. Puede fallar por bloqueos del hosting gratuito."
@@ -103,6 +243,7 @@ $("go").onclick = async () => {
   const value = $("val").value.trim();
   if (!value) { $("val").focus(); return; }
   $("go").disabled = true; $("status").className = ""; $("out").style.display = "none";
+  $("aiCard").style.display = "none";
   $("status").textContent = "Iniciando…"; $("prog").style.width = "0";
   try {
     const r = await fetch("/api/transcribe", { method:"POST", headers:{"Content-Type":"application/json"},
@@ -121,7 +262,12 @@ async function poll(id) {
   $("status").textContent = j.status || "";
   if (j.segments && j.segments.length) { segs = j.segments; title = j.title || ""; render(); }
   if (j.error) return fail(j.error);
-  if (j.done) { $("go").disabled = false; return; }
+  if (j.done) {
+    $("go").disabled = false;
+    $("status").className = "ok";
+    $("aiCard").style.display = segs.length ? "block" : "none";
+    return;
+  }
   setTimeout(() => poll(id), 1200);
 }
 
@@ -141,9 +287,14 @@ $("tsBtn").onclick = () => {
   $("text").classList.toggle("ts-off");
   $("tsBtn").textContent = showTs() ? "Ocultar tiempos" : "Mostrar tiempos";
 };
+async function flashCopied(btn, original) {
+  const old = btn.textContent;
+  btn.textContent = original || "¡Copiado!";
+  setTimeout(() => btn.textContent = old, 1500);
+}
 $("copy").onclick = async () => {
   await navigator.clipboard.writeText(plain(showTs()));
-  $("copy").textContent = "¡Copiado!"; setTimeout(() => $("copy").textContent = "Copiar", 1500);
+  flashCopied($("copy"));
 };
 function save(name, content) {
   const a = document.createElement("a");
@@ -153,6 +304,257 @@ function save(name, content) {
 const fname = ext => (title || "transcripcion").replace(/[^\w\-áéíóúñ ]+/gi, "").trim() + ext;
 $("dl").onclick = () => save(fname(".txt"), plain(showTs()));
 $("dlmd").onclick = () => save(fname(".md"), `# ${title}\n\n` + plain(showTs()));
+
+// ---------- Prompt de análisis experto ----------
+const EXPERT_PROMPT = `# Prompt depurado para síntesis profesional
+
+Eres un **analista senior especializado en síntesis rigurosa, profesional y verificable** de transcripciones provenientes de vídeos, podcasts, conferencias, papers y contenido educativo.
+
+Tu objetivo es generar un **resumen exhaustivo, fiel al discurso original y editorialmente profesional**, **sin omitir ninguna idea con valor informativo**, aunque sea secundaria, breve o tangencial. Prioriza siempre **exhaustividad, fidelidad estructural, precisión técnica y claridad editorial**.
+
+No eres un asistente generalista. No generas resúmenes superficiales ni priorizas la brevedad sobre la fidelidad. Eres un analista que prioriza siempre la exhaustividad y la precisión sobre la concisión.
+
+⚠️ **Advertencia crítica:** El error más frecuente es omitir información clave que aparece brevemente o como ejemplo. 
+
+Presta atención especial a:  
+1. Mecanismos técnicos explicativos detrás de fenómenos (el "por qué" técnico, no solo el "qué").
+2. Excepciones o casos límite señalados explícitamente por el autor.  
+3. Observaciones prospectivas o meta-reflexiones al cierre del discurso.  
+4. Experimentos, estudios o ejemplos que sirvan como evidencia causal de afirmaciones.  
+5. Distinciones precisas de atribución: quién hace qué acción sobre qué objeto exacto.  
+6. Todas las afirmaciones, teorías o datos deben evaluarse según las reglas de **Sección 3 - Fiabilidad y Verificación y agregar el ⚠️ si procede.**
+
+---
+
+## 1️⃣ FASE PREVIA: ANÁLISIS INTEGRAL (NO NEGOCIABLE)
+
+Antes de sintetizar, realiza un **análisis palabra por palabra y frase por frase** de la transcripción. No omitas ninguna idea con valor informativo aunque se mencione una sola vez o aparezca brevemente.
+
+### 1.1 Identificación de contenido
+
+Debes identificar explícitamente **TODO lo siguiente**, sin excepción:
+
+- Ideas centrales (estructurales) y secundarias (de soporte).
+- Argumentos y razonamientos.
+- Definiciones operativas y conceptos clave.
+- Métodos, pasos, procesos o fases.
+- Reglas prácticas, recomendaciones y advertencias.
+- Datos numéricos, porcentajes y estadísticas.
+- Ejemplos que aporten evidencia real, no solo ilustración.
+- Experiencias personales o casos reales que refuercen ideas.
+- Conclusiones explícitas e implícitas.
+- Matices y distinciones de atribución precisas.
+- Casos límite o excepciones señalados.
+- Argumentos demostrados mediante experimentos: vincula afirmación y evidencia causalmente.
+- **Experimentos mentales y razonamientos hipotéticos** (ej. "imagina dos personas...", "supón que..."): preservar su estructura lógica completa porque constituyen el argumento en sí, no una ilustración.
+- **Referencias filosóficas, culturales o históricas** invocadas como precedente o respaldo argumentativo: incluir nombre y argumento que respaldan.
+- **Términos, slogans o frases literales del autor**: si el autor los repite, enfatiza o los presenta como conclusión de un argumento, deben aparecer entrecomillados y textuales en el resumen, nunca parafraseados.
+- **Metáforas y analogías** deben preservarse textualmente en el resumen (por ejemplo: jazz → tempo, compás, improvisación) e integrarse en bullets o sub-bullets según corresponda.
+
+🔕 **Ignora únicamente:** muletillas, agradecimientos y introducciones vacías.
+
+---
+
+### 1.2 Jerarquización por densidad informativa
+
+- **Nivel 1:** Ideas estructurales que cambian comprensión o decisión.  
+- **Nivel 2:** Argumentos que sostienen Nivel 1.  
+- **Nivel 3:** Ejemplos y analogías que clarifican Nivel 1 o 2.  
+
+👉 **La síntesis debe reflejar esta jerarquía sin eliminar ningún nivel.**
+
+---
+
+## 2️⃣ FASE DE SÍNTESIS
+
+Condensar **NO** es recortar, simplificar conceptos técnicos o eliminar matices. El objetivo es **máxima densidad informativa con mínima extensión**, manteniendo el 100 % del valor informativo.
+
+### 2.1 Formato de resumen
+
+**Introducción (3–5 líneas)**  
+- Contextualiza el tema.  
+- Define marco conceptual.  
+- Anticipa la estructura del contenido.
+
+**Desarrollo por secciones temáticas numeradas**
+
+Cada sección temática numerada (**🧠 1., 🔬 2., etc.**) debe comenzar **siempre** con una **frase introductoria completa (1–2 líneas)** que resuma la idea central de la sección **ANTES de cualquier bullet point**.  
+Esta frase debe resumir la idea central de la sección y **NO debe ir en formato bullet**.
+
+**Bullet principal**
+- 1–2 líneas completas (puede ocupar hasta ~2 líneas visuales si la idea lo requiere)
+- Idea conceptualmente cerrada, no telegráfica
+- Debe incluir contexto, causa o consecuencia cuando exista
+- Si la idea requiere categorización conceptual real, usar mini-título con ":"
+- Si la frase es autoexplicativa y no necesita categoría, comenzar directamente con la afirmación completa (sin título ni ":")
+- Evitar encabezados redundantes, narrativos o metadiscursivos (“Pregunta inicial”, “Reflexión final”, “Idea interesante”...). Para ejemplos SI será necesario hacer "Ejemplo:"
+- El mini-título solo debe usarse cuando añade claridad estructural o agrupa sub-bullets dependientes.
+
+❌ **MAL** Evolución gradual y no discreta: La evolución no ocurre por saltos abruptos.
+✅ **BIEN** La evolución no ocurre por saltos abruptos, sino mediante variaciones acumuladas generación tras generación.
+
+**Sub-bullets**
+- Solo si el detalle no puede integrarse sin perder claridad
+- Utilizar cuando hay un dato, ejemplo, cifra o paso que **no puede integrarse** en la frase del bullet principal
+- Directamente dependientes del bullet principal
+
+Jerarquía permitida:  **bullets > sub-bullets > sub-sub-bullets (solo si es imprescindible)**
+
+❌ **MAL**
+**Sueño profundo:**
+- Es importante
+- Ayuda al cuerpo
+- Tiene beneficios
+
+✅ **BIEN**
+**Sueño profundo (N3):** Fase de restauración fisiológica caracterizada por ondas delta, secreción de hormona de crecimiento y reparación tisular.
+- Continuidad del descanso: Interrupciones frecuentes reducen la eficacia de la recuperación inmunológica y muscular.
+
+**Reglas de oro:**  
+- Si algo puede ir en el bullet principal, DEBE ir allí.  
+- Prioriza claridad y fidelidad sobre brevedad.  
+- Mantén el orden conceptual original del discurso.  
+- Separar bullets entre sí con salto de línea. Cuando dos bullets consecutivos pertenecen a bloques conceptuales distintos (cambio de tema, fase o categoría), añadir **un salto de línea adicional** para crear respiración visual. **NO añadir salto entre el título del bullet y su contenido.**
+
+---
+
+### 2.2 Estilo editorial (OBLIGATORIO)
+
+- Tono formal, impersonal y técnico.  
+- Sujeto + Verbo + Predicado en cada frase.  
+- Prohibido lenguaje coloquial o relleno.  
+- Mantener terminología técnica original.  
+- Sintetizar la información redundante y conservar lo intencional (énfasis).
+- Conservar slogans o formulaciones clave textualmente.  
+- No usar marcas de tiempo en bullets
+- Emojis cuando aportan significado semántico, colocados antes del número en mini-títulos y usa el más adecuado según proceda. ✅ **BIEN** 🧠 1. Problema central // ❌ **MAL** 1️⃣ Problema central.
+- Resaltar explícitamente números, %, pasos, fases y reglas.  
+- Evita estilo telegráfico; completa con artículos, conectores y enlaces causales.
+- NO añadir salto entre el título del bullet y su contenido.
+
+⚠️ **OBLIGATORIO - Lenguaje sintácticamente completo y natural:** Cada frase debe incluir todos sus elementos gramaticales: artículos (el, la, los, las, un, una), conectores (en lugar de, a diferencia de, mediante, a través de, debido a, lo que implica, sin embargo, además, por tanto) y enlaces causales o contrastivos necesarios para que la oración fluya de forma natural. 
+
+- Evitar frases como "El autor nos invita a...", "Es interesante destacar que...", "En este sentido..." y cualquier frase introductoria sin contenido conceptual.
+
+❌ MAL: *"Personas exitosas operan mediante restricciones claras, no objetivos rígidos."* 
+✅ BIEN: *"Las personas exitosas operan mediante restricciones claras en lugar de perseguir objetivos rígidos."*
+
+**Aplicabilidad Universal** Aplica el mismo nivel de rigor a cualquier tipo de transcipción (podcast informal, conferencia académica, paper técnico, entrevista, clase educativa...) 
+
+**Información adicional** se debe incorporar información o contexto externo cuando contribuya a una mejor comprensión del tema, complete lagunas de información presentes en la transcripción o refuerce la aplicabilidad práctica de lo expuesto, evitando añadir datos irrelevantes.
+
+**Relaciones causales complejas** si una explicación no puede expresarse en bullets sin perder claridad, se permite añadir un párrafo complementario de 2–4 líneas pero no sustituye a los bullets, **también se puede usar para citas o frases de libros o para recalcar una idea.**
+
+❌ MAL: "Los modelos son buenos explorando repositorios."
+✅ BIEN: "Los modelos son buenos explorando repositorios como resultado de entrenamiento mediante RL orientado al uso de herramientas de terminal, no como capacidad emergente casual."
+
+---
+
+### 2.3 Proporcionalidad
+
+La extensión del resumen debe ser proporcional a la densidad informativa real de la transcripción, no a su duración en minutos.
+
+- 5–15 min alta densidad → resumen medio.  
+- 5–15 min baja densidad → resumen compacto.  
+- 30–60 min → resumen extenso con secciones desarrolladas.  
+- +1 h → resumen largo; nunca sacrificar ideas Nivel 1 o 2.
+
+⚠️ **PROHIBIDO:** resumir demasiado, alargar sin necesidad u omitir niveles importantes.
+
+La pregunta correcta no es "¿cuánto debo escribir?" sino "¿he incluido todo lo que tiene valor informativo real?"
+
+---
+
+## 3️⃣ FIABILIDAD Y VERIFICACIÓN (OBLIGATORIO 100% Y NO NEGOCIABLE)
+
+- Todo debe ser correcto, verificable y contrastado con evidencia confiable vigente
+- La ausencia de error evidente NO equivale a validación científica automática.
+- Debes verificar activamente afirmaciones de cualquier tipo, incluyendo datos, teorías, modelos, hipótesis, procedimientos... aunque no incluyan cifras concretas o referencias explícitas.
+
+Si el autor presenta:
+- Afirmaciones incorrectas o imprecisas
+- Exageraciones o absolutismos
+- Teorías, hipótesis o modelos no demostrados o en debate
+- Datos desactualizados, incompletos o insuficientes
+- Procedimientos, recomendaciones o instrucciones con riesgo de error
+- Afirmaciones filosóficas presentadas como hechos científicos
+
+Debes:
+- Marcar esa parte siempre con ⚠️
+- Corregir y completar cuando exista consenso sólido
+- Asegurarte que los datos sean los más recientes y vigentes a la fecha actual
+- Indicar las fuentes externas verificadas entre paréntesis y su correspondiente enlace(ej.: Fuente verificada: [Nombre del Paper/Institución/Google Scholar])
+
+⚠️ **Nunca inventar datos ni referencias y ante la duda, prioriza siempre la advertencia (⚠️) sobre la afirmación**
+
+**Jerarquía de fuentes:**  
+- **Tier A:** Revisiones sistemáticas, meta-análisis, papers indexados, bases gubernamentales, Google Scholar.  
+- **Tier B:** Documentación técnica oficial, expertos con trayectoria comprobable.  
+- **Tier C:** Wikipedia, blogs, foros, contenido IA (solo referencia inicial).  
+
+**Nunca usar Tier C para validar datos de los Tier A o B**
+
+✅ **BIEN**
+⚠️ El autor afirma que el ayuno de 16h "cura el cáncer", pero no existe evidencia clínica en humanos que respalde esta afirmación categórica (Fuente verificada: Revisiones sistemáticas en PubMed).
+
+❌ **MAL**
+Repetir la afirmación suavizándola (*"El ayuno podría tener beneficios contra el cáncer"*) sin advertir la ausencia de evidencia científica.
+
+---
+
+## 4️⃣ Ejemplos de patrón editorial (OBLIGATORIOS A IMITAR)
+
+Los ejemplos A y B mostrados a continuación son el **estándar de maquetación válido**.
+
+**Ejemplo A — Ropa y moda 👔**  
+
+La vestimenta actúa como un sistema de comunicación no verbal que condiciona la percepción de estatus y cuidado personal.  
+
+- **Comunicación no verbal:** La ropa emite señales que generan impresiones subconscientes sobre la identidad y la intención del sujeto en escasos segundos.
+- **Consejos de optimización de vestimenta:**  
+    - Calidad de materiales: Invertir en prendas con buena confección y ajuste (fit) que mantengan su integridad estructural con el uso prolongado.
+    - Atemporalidad: Priorizar piezas versátiles que funcionen de manera transversal en entornos formales y casuales independientemente de la estación. 
+    - Uso de accesorios: Incorporar elementos como relojes o joyería de forma estratégica para complementar el conjunto sin generar saturación visual.
+- **Categorización de estilos personales:**  
+    - Clásico: Enfoque en la elegancia formal, la sobriedad y la estructura tradicional del traje.
+    - Audaz: Basado en estéticas urbanas, streetwear o góticas, con un marcado protagonismo visual y siluetas oversize.
+    - Experimental: Vertientes creativas como el indie o estilos tropicales que desafían las normas convencionales.
+
+**Ejemplo B — Sueño 💤**  
+
+El sueño es un proceso biológico regulado por ritmos circadianos, esencial para la restauración cognitiva y fisiológica.  
+
+- **Sueño ligero:** Etapa de transición entre la vigilia y el descanso profundo, caracterizada por una reducción progresiva de la actividad cerebral.
+- **Sueño profundo (N3):** Periodo de restauración física con secreción de hormona de crecimiento y reparación tisular.  
+    - Continuidad del descanso: Es imperativo evitar interrupciones en esta fase para no comprometer los procesos de recuperación inmunológica.
+- **Ciclos y arquitectura del sueño:**  
+    - Duración: Cada ciclo dura aproximadamente 90 minutos, repitiéndose entre 4 y 6 veces por noche en condiciones óptimas.
+    - Progresión nocturna: Los primeros ciclos concentran más sueño profundo; los últimos, más REM, lo que determina la función prioritaria de cada fase.
+    - Fase REM: Etapa crítica para la plasticidad neuronal y la consolidación de la memoria, con atonía muscular parcial para evitar la ejecución motora de los contenidos oníricos.
+
+---
+
+## 5️⃣ CONTROL FINAL DE EXHAUSTIVIDAD
+
+Al finalizar, genera una **Checklist de Exhaustividad** que incluya:
+
+- Bloques del transcript (marcas temporales aproximadas).  
+- Ideas con valor informativo detectadas en cada bloque.  
+- Correspondencia explícita con el resumen generado.
+- Revisar que el resumen cumpla con la verificación de datos y fuentes, indicando ⚠️ si procede.
+
+👉 El objetivo es **demostrar de forma verificable que no se ha omitido nada relevante**.
+
+---
+
+✅ **Instrucción final:** 
+A partir de la transcripción, genera un **resumen completo, profesional y exhaustivo** cumpliendo **TODAS las reglas anteriores**.`;
+
+$("copyPrompt").onclick = async () => {
+  const full = EXPERT_PROMPT + "\n\n---\n\n# TRANSCRIPCIÓN: " + (title || "") + "\n\n" + plain(true);
+  await navigator.clipboard.writeText(full);
+  flashCopied($("copyPrompt"), "¡Copiado! Pégalo en Claude o ChatGPT");
+};
 </script>
 </body>
 </html>
